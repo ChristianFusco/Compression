@@ -4,9 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include <fstream>
 #include <algorithm>
-#include <Windows.h>
 
 const int MAX_CHAR_VAL = 256;
 const int MAX_CHAR_BITS = 8;
@@ -39,10 +37,7 @@ struct Node {
 
 int convertStrToInt(std::string in);
 std::string charToBitString(int c);
-std::string charToBitStringSlow(int c);
-Node** sortNodes(Node** nodes);
-Node* allocateNode();
-void deleteNode(Node* node);
+//std::string charToBitStringSlow(int c);
 void printTree(Node* head);
 void printTree(Node* head, std::string spaces);
 void insertionSort_inplace(Node** nodes, int size);

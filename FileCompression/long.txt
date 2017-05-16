@@ -26,9 +26,6 @@ Character set encoding: ASCII
 
 
 
-
-
-
 ALICE'S ADVENTURES IN WONDERLAND
 
 Lewis Carroll

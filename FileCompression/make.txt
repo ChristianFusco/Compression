@@ -1,0 +1,16 @@
+clang++ Functions.cpp HuffmanTree.cpp main.cpp -o run.out
+./run.out
+fileSizeExpected=$(wc -c <./long.txt)
+fileSizeActual=$(wc -c <./long2.txt)
+compressedFileSize=$(wc -c <./out.txt)
+compressedFileSize=$((compressedFileSize * 100))
+compressionRatio=$((compressedFileSize / fileSizeActual))
+if [ $fileSizeExpected -eq $((fileSizeActual - 1)) ]; then
+	ECHO Compression successful.  Ratio is: $compressionRatio
+else
+	ECHO Compression not successful.
+fi
+ECHO “Cleaning up leftover files…”
+rm long2.txt
+rm out.txt
+rm run.out

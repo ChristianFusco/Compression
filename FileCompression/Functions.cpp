@@ -1,6 +1,8 @@
 #include "Header.h"
 #include <cstdio>
 #include <ctime>
+#include <stdio.h>
+#include <math.h>
 
 /*
 Converts a string from base 2 to base 10
@@ -29,39 +31,6 @@ RETURN:
 The character's bit value as a string.
 */
 std::string charToBitString(int c) {
-	std::string output = "        ";
-	_asm {
-		lea edi, output
-		mov eax, c
-		mov ebx, 128
-		mov ecx, 8
-		mov edx, 4
-		shiftAndAppend:
-			cmp al, 128
-				jb lessThan
-				mov bl, '1'
-				mov[edi + (edx)], bl
-				jmp end
-				lessThan :
-			mov bl, '0'
-				mov[edi + (edx)], bl
-				end :
-			inc edx
-				shl al, 1
-				loop shiftAndAppend
-	}
-	return output;
-}
-
-/*
-Converts a string that contains a single character to a string
-that contains its ASCII value in 8 bits.
-PARA:
-An integer that represents a character value
-RETURN:
-The character's bit value as a string.
-*/
-std::string charToBitStringSlow(int c) {
 	std::string toReturn = "";
 	while (c != 0) {
 		if (c % 2 == 0) {

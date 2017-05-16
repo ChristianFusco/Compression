@@ -1,5 +1,9 @@
 #include "HuffmanTree.h"
 #include <queue>
+#include <string>
+#include <fstream>
+#include <fcntl.h>
+#include <unistd.h>
 
 /*
 Given some binary string, search for a node form the tree.  This node will
@@ -11,9 +15,9 @@ out			- some output stream, usually the soon to be uncompressed file
 fullChar	- A string of 1's and 0's of at least length 9.  If fullChar is
 			ever less than 9 characters, it's probably at eof for input.
 */
-void HuffmanTree::printChar(std::ofstream &out, std::string &fullChar) {
+void HuffmanTree::printChar(std::ostream &out, std::string &fullChar) {
 	Node* currentChar = getNodeFromTree(fullChar);
-	if (currentChar != NULL) {
+    if (currentChar != NULL) {
 		//character was found, just print it's key
 		out << currentChar->key;
 	}
@@ -39,20 +43,21 @@ file - The filename of the soon to be uncompressed file.
 */
 void HuffmanTree::decode(std::string file)
 {
-	//it has to be binary or WINDOWS DECIDES IT KNOWS BETTER THAN NI DO
-	//AND IT INSERTS RANDOM CHARACTERS
+    //nodeleterino
 	std::ifstream in(file, std::ios::in | std::ios::binary);
 	std::ofstream out("long2.txt", std::ios::out | std::ios::binary);
-
 	if (in.is_open()) {
-		char input = NULL;
+		char input = (char)0;
 		std::string fullChar = "";	//this will save leftover bits from each char
 		while (in.get(input)) {
-			fullChar = fullChar + charToBitString(input);
-
+            int charVal = (int)input;
+            if(charVal < 0){
+                charVal+=256;
+            }
+			fullChar = fullChar + charToBitString(charVal);
 			//ensures theres enough characters for a swap
 			while (fullChar.length() > MAX_CHAR_BITS) {
-				printChar(out, fullChar);
+                printChar(out, fullChar);
 			}
 		}
 		//sometimes garbage will be left in the file so kick that out
@@ -153,74 +158,52 @@ They contain the character as a key, and percentage as a double.
 */
 Node **HuffmanTree::getTextAnalysis()
 {
-	Node **words = new Node*[MAX_CHAR_VAL];
-	//init dynamic array
+    //Create the nodes ahead of time and init them
+    Node **words = new Node*[MAX_CHAR_VAL];
 	for (int i = 0; i < MAX_CHAR_VAL; i++) {
 		words[i] = new Node;
+        words[i]->key = (char)i;
 	}
-	//BIG BUFFERS MEAN READ GOES ALL FAST LIKE
-	//This is actually the fastest buffer size, nochangerino
-	unsigned int fileSize = 500000;
-	unsigned int charsRead = 0;
-	char* _BIG_BUFFERS_ = new char[fileSize];
-	char* STD_IN = "./long.txt";
-	int IN_FD;
-	_asm {
-		MOV ecx, 255
-		init:
-		MOV edi, words
-			MOV edi, [edi + ecx * 4]
-			MOV [edi], ecx
-			loop init
-
-		PUSH NULL
-		PUSH FILE_ATTRIBUTE_NORMAL
-		PUSH OPEN_EXISTING
-		PUSH NULL
-		PUSH FILE_SHARE_READ
-		PUSH GENERIC_READ
-		PUSH STD_IN
-		CALL CreateFileA
-		MOV IN_FD, eax
-
-		read :
-			PUSH NULL
-			LEA edx, charsRead
-			PUSH edx
-			PUSH fileSize
-			PUSH _BIG_BUFFERS_
-			PUSH IN_FD
-			CALL ReadFile
-			MOV ecx, charsRead
-			MOV esi, _BIG_BUFFERS_
-			MOV edi, words
-			CMP charsRead, 0
-			JZ quit
-		count :
-			XOR eax, eax
-			MOV al, [esi + ecx - 1]
-			MOV eax, [edi + eax * 4]
-			MOV ebx, [eax + 4]
-			INC ebx
-			MOV [eax + 4], ebx
-			loop count
-		JMP read
-		quit :
-		PUSH IN_FD
-		CALL CloseHandle
-	}
-	delete[] _BIG_BUFFERS_;	
+    //Open and check a file
+    int fd = open("./long.txt", O_RDONLY);
+    if(!fd)
+        return NULL;
+    int bufferSize = bufferSize1;
+    char* read_buffer = new char[bufferSize];
+    int bytes_read = 0;
+    while((bytes_read = read(fd, read_buffer, bufferSize)) > 0){
+        for(int i = 0; i < bytes_read; i++){
+            unsigned int index = (unsigned int)read_buffer[i];
+            words[index]->data++;
+        }
+    }
+    delete[] read_buffer;
 	return words;
 }
 
-HuffmanTree::HuffmanTree() {
+HuffmanTree::HuffmanTree(int b1, int b2) {
+    bufferSize1 = b1;
+    bufferSize2 = b2;
 	Node **words = getTextAnalysis();
 	insertionSort_inplace(words, 256);
 	setUpFill(words);
 	trimTree();
-	fillHash(); 
+	fillHash();
 	compress("out.txt");
 	decode("out.txt");
+}
+
+HuffmanTree::~HuffmanTree() {
+    deleteTree(root);
+}
+
+void HuffmanTree::deleteTree(Node* node)  {
+    if(!node){
+        return;
+    }
+    deleteTree(node->left);
+    deleteTree(node->right);
+    delete node;
 }
 
 /*
@@ -231,38 +214,51 @@ Output file name
 */
 void HuffmanTree::compress(std::string file)
 {
-
-	std::ifstream myIn("long.txt", std::ios::in | std::ios::binary);
-	std::ofstream myOut(file, std::ios::out | std::ios::binary);
-	if (myIn.is_open())
-	{
-		char input = NULL;
-		std::string binaryString = "";
-		//Characters read in one at a time
-		while (myIn.get(input))
-		{
-			//TODO: stop casting 3 seperate times
-			unsigned char unsignedInput = input;
-			//convert character
-			std::string newChar = hashTable[(int)unsignedInput];
-			binaryString = binaryString + newChar;
-			//sometimes you can end up with mutltiple characters in the binary string
-			while (binaryString.length() > MAX_CHAR_BITS - 1)
-			{
-				//convert binary string to a letter and output it
-				char output = convertStrToInt(binaryString.substr(0, MAX_CHAR_BITS));
-				myOut << output;
-				binaryString.erase(0, MAX_CHAR_BITS);
-			}
-		}
-		//Append 0's if there aren't enough bits to make a full character
-		//This is eof
-		while (binaryString.length() != MAX_CHAR_BITS)
-			binaryString = binaryString + "0";
-		char output = (int)convertStrToInt(binaryString);
-		myOut << output;
+    //Open and check a file
+    int r_fd = open("./long.txt", O_RDONLY);
+    int bufferSize = bufferSize2;
+    char* read_buffer = new char[bufferSize];
+    int bytes_read = 0;
+    int w_fd = open(file.c_str(), O_WRONLY);
+    char* write_buffer = new char[bufferSize];
+    int write_buffer_size = 0;
+	if (!w_fd || !r_fd)
+        return;
+    char input = (char)0;
+	std::string binaryString = "";
+    while((bytes_read = read(r_fd, read_buffer, bufferSize)) > 0){
+        for(int i = 0; i < bytes_read; i++){
+            //TODO: stop casting 3 seperate times
+            unsigned char unsignedInput = read_buffer[i];
+            //convert character
+            std::string newChar = hashTable[(int)unsignedInput];
+            binaryString = binaryString + newChar;
+            //sometimes you can end up with mutltiple characters in the binary string
+            while (binaryString.length() > MAX_CHAR_BITS - 1)
+            {
+                //convert binary string to a letter and output it
+                char output = convertStrToInt(binaryString.substr(0, MAX_CHAR_BITS));
+                write_buffer[write_buffer_size] = output;
+                write_buffer_size++;
+                if(write_buffer_size == bufferSize){
+                    write(w_fd, write_buffer, write_buffer_size);
+                    write_buffer_size = 0;
+                }
+                binaryString.erase(0, MAX_CHAR_BITS);
+            }
+        }
 	}
-	myIn.close();
+	//Append 0's if there aren't enough bits to make a full character
+	//This is eof
+    while (binaryString.length() != MAX_CHAR_BITS){
+		binaryString = binaryString + "0";
+    }
+	char output = (int)convertStrToInt(binaryString);
+    write_buffer[write_buffer_size] = output;
+    write_buffer_size++;
+    write(w_fd, write_buffer, write_buffer_size);
+    delete[] read_buffer;
+    delete[] write_buffer;
 }
 
 /*
@@ -296,7 +292,7 @@ RETURN:
 The path down the tree if the node has been found or if the search has not 
 reached the end.  Otherwise, empty string.
 */
-std::string HuffmanTree::search(Node *ptr, std::string output, char key)
+std::string HuffmanTree::search(Node* ptr, std::string output, char key)
 {
 	if (!ptr) {
 		return "";
@@ -307,9 +303,9 @@ std::string HuffmanTree::search(Node *ptr, std::string output, char key)
 	//Returns no string if ptr reaches the escape node
 	//Also returns no string if it has reached a leaf
 	//TODO: Figure out of ptr->left != NULL is a better choice
-	if (output == "0" || ptr->key != 0)
+	if (output == "0" || ptr->key != (char)0)
 		return "";
-	std::string tempOutput;
+    std::string tempOutput = "";
 	tempOutput = search(ptr->left, output + "0", key);
 	//Return output if some key was found
 	if (tempOutput != "")
@@ -422,4 +418,5 @@ Node* HuffmanTree::findNextNode(Node *node, int target) {
 			return tmp;
 		}
 	}
+    return NULL;
 }
