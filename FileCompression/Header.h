@@ -6,10 +6,10 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <Windows.h>
 
-const std::string STD_INPUT = "long.txt";
-const std::string STD_OUT = "out.txt";
 const int MAX_CHAR_VAL = 256;
+const int MAX_CHAR_BITS = 8;
 
 /*
 Use these nodes to create a huffman tree.
@@ -26,11 +26,11 @@ So, if a -1 node has two children that have data values of 7 and 14,
 the -1 node's data value is 21.
 */
 struct Node {
-	std::string key;
-	double data;
+	char key;
+	int data;
 	Node *left, *right;
 	Node() {
-		key = "";
+		key = 0;
 		data = 0;
 		left = nullptr;
 		right = nullptr;
@@ -40,7 +40,10 @@ struct Node {
 int convertStrToInt(std::string in);
 std::string charToBitString(int c);
 std::string charToBitStringSlow(int c);
-int binarySearch(std::vector<Node*> nodeArr);
-bool nodeDataGreaterThen(Node* left, Node* right);
-
+Node** sortNodes(Node** nodes);
+Node* allocateNode();
+void deleteNode(Node* node);
+void printTree(Node* head);
+void printTree(Node* head, std::string spaces);
+void insertionSort_inplace(Node** nodes, int size);
 #endif // !HEADER_H

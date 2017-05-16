@@ -8,12 +8,15 @@ Clock was running.
 ChRiStIaN fUsCo \o/\o/\o/
 */
 
+#ifndef CLOCK_H
+#define CLOCK_H
+
 #include <iostream>
 #include <cstdio>
 #include <ctime>
 #include <string>
 
-class Clock{
+class Clock {
 private:
 	std::clock_t start;
 	std::string des;
@@ -35,3 +38,5 @@ double Clock::stopClock()
 	std::cout << "Clock with descriptor: " << des << " took " << dur << " seconds.\n";
 	return dur;
 }
+
+#endif // !CLOCK_H

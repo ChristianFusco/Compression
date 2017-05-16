@@ -37,18 +37,18 @@ std::string charToBitString(int c) {
 		mov ecx, 8
 		mov edx, 4
 		shiftAndAppend:
-		cmp al, 128
-			jb lessThan
-			mov bl, '1'
-			mov[edi + (edx)], bl
-			jmp end
-			lessThan :
-		mov bl, '0'
-			mov[edi + (edx)], bl
-			end :
-		inc edx
-			shl al, 1
-			loop shiftAndAppend
+			cmp al, 128
+				jb lessThan
+				mov bl, '1'
+				mov[edi + (edx)], bl
+				jmp end
+				lessThan :
+			mov bl, '0'
+				mov[edi + (edx)], bl
+				end :
+			inc edx
+				shl al, 1
+				loop shiftAndAppend
 	}
 	return output;
 }
@@ -79,37 +79,34 @@ std::string charToBitStringSlow(int c) {
 	return toReturn;
 }
 
-/*
-Does a binary search on the vector to find target location
-PARA:
-A vector of nodes sorted by node.data
-A target double value, usually the data of the node to be inserted
-RETURN:
-The index of the node that was found
-*/
-int binarySearch(std::vector<Node*> nodeArr, double target) {
-	//find a midpoint
-	int min = 0;
-	int max = nodeArr.size();
-	while (min < max) {
-		int i = (min + max) / 2;
-		//double values will rarely be equal, so find a point where it just fits
-		if (nodeArr[i - 1]->data > target) {
-			if (nodeArr[i]->data <= target) {
-				return i;
-			}
-			else {
-				min = i + 1;
-			}
+void insertionSort_inplace(Node** list, int size) {
+	for (int i = size - 1; i >= 0; i--) {
+		Node* tmp = list[i];
+		int j = i + 1;
+		while (j < size && list[j]->data > tmp->data) {
+			list[j - 1] = list[j];
+			j++;
 		}
-		else {
-			max = i - 1;
-		}
+		list[j - 1] = tmp;
 	}
-	return -1;
 }
 
-//Used for sorting with std::sort
-bool nodeDataGreaterThen(Node* left, Node* right) {
-	return left->data > right->data;
+
+void printTree(Node* head) {
+	printTree(head, "");
+}
+
+void printTree(Node* head, std::string spaces) {
+	if (spaces.length() == 9) {
+		return;
+	}
+	if (head->key == 0) {
+		std::cout << spaces.length() << " /0" << "\n";
+	}
+	else
+		std::cout << spaces.length() << " " << head->key << "\n";
+	if(head->left != NULL)
+		printTree(head->left, spaces + " ");
+	if(head->right != NULL)
+		printTree(head->right, spaces + " ");
 }
